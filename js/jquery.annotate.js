@@ -21,10 +21,10 @@
         this.notes = opts.notes;
 
         // Add the canvas
-        this.canvas = $('<div class="image-annotate-canvas"><div class="image-annotate-view"></div><div class="image-annotate-edit"><div class="image-annotate-edit-area"></div></div><div class="image-annotate-edit-arrow"><div class="image-annotate-edit-area-arrow"></div></div></div>');
+        this.canvas = $('<div class="image-annotate-canvas"><div class="image-annotate-view"></div><div class="image-annotate-edit"><div class="image-annotate-edit-area"></div><div class="image-annotate-edit-arrow-area"></div></div></div>');
         this.canvas.children('.image-annotate-edit').hide();
         this.canvas.children('.image-annotate-view').hide();
-        this.canvas.children('.image-annotate-edit-arrow').hide();
+//        this.canvas.children('.image-annotate-edit-arrow').hide();
 //        this.canvas.children('.image-annotate-view').hide();
         this.image.after(this.canvas);
 
@@ -32,8 +32,8 @@
         this.canvas.height(this.height());
         this.canvas.width(this.width());
         this.canvas.css('background-image', 'url("' + this.attr('src') + '")');
-        this.canvas.children('.image-annotate-view, .image-annotate-edit, .image-annotate-edit-arrow').height(this.height());
-        this.canvas.children('.image-annotate-view, .image-annotate-edit, .image-annotate-edit-arrow').width(this.width());
+        this.canvas.children('.image-annotate-view, .image-annotate-edit').height(this.height());
+        this.canvas.children('.image-annotate-view, .image-annotate-edit').width(this.width());
 
         // Add the behavior: hide/show the notes when hovering the picture
         this.canvas.hover(function () {
@@ -61,6 +61,7 @@
         if (this.editable) {
             this.button_rect = $('<a class="image-annotate-add-rect" id="image-annotate-add-rect" href="#"></a>');
             this.button_arrow = $('<a class="image-annotate-add-arrow" id="image-annotate-add-arrow" href="#"></a>');
+            this.button_text = $('<a class="image-annotate-add-text" id="image-annotate-add-text" href="#"></a>');
 
             //For rect
             this.button_rect.click(function () {
@@ -76,6 +77,12 @@
 //                $.fn.annotateImage.add(image);
             });
             this.canvas.after(this.button_arrow);
+            //for text
+            this.button_text.click(function () {
+
+                var editable = new $.fn.annotateEdit_text(image);
+            });
+            this.canvas.after(this.button_rect);
         }
 
         // Hide the original
@@ -226,6 +233,12 @@
         return '&lt;input type="hidden" name="' + name + '" value="' + value + '" /&gt;<br />';
     };
 
+//------------------------------------------------------------//
+//--<RECT  RECT  RECT  >-- //
+    //For RECT functioning
+//--<  RECT RECT RECT >-- //
+//------------------------------------------------------------//
+
     $.fn.annotateEdit_rext = function (image, note) {
         ///	<summary>
         ///		Defines an editable annotation area.
@@ -287,6 +300,15 @@
                 });
         return this;
     };
+
+
+
+//------------------------------------------------------------//
+//--<ARROW  ARROW  ARROW  >--//
+    //For arrow functioning
+//--<  ARROW ARROW ARROW >--//
+//------------------------------------------------------------//
+
     $.fn.annotateEdit_arrow = function (image, note) {
         ///	<summary>
         ///		Defines an editable annotation area.
@@ -307,36 +329,119 @@
         var x4 = this.note.x2 - arrowHeadLength * Math.cos(end2)
 
 
-//        if (note) {
-//            this.note = note;
-//        } else {
-//            var newNote = new Object();
-//            newNote.id = "new";
-//            newNote.top = 30;
-//            newNote.left = 30;
-//            newNote.width = 30;
-//            newNote.height = 30;
-//            newNote.text = "";
-//            this.note = newNote;
-//        }
-//        console.log(this.note)
 //        // Set area
-        var area = image.canvas.children('.image-annotate-edit-arrow').children('.image-annotate-edit-area-arrow');
+        var area = image.canvas.children('.image-annotate-edit').children('.image-annotate-edit-arrow-area');
         this.area = area;
-        this.area.css('height', 0 + 'px');
-        this.area.attr('id', 'arrow')
-//        this.area.css('width', this.note.width + 'px');
-        this.area.attr('x1', this.note.x1)
-        this.area.attr('x2', this.note.x2)
-        this.area.attr('y1', this.note.y1)
-        this.area.attr('y2', this.note.y2)
+        this.area.css('height', 5 + 'px');
+//        this.area.attr('id', 'arrow')
+        this.area.css('width', 120 + 'px');
 
-//        this.area.css('left', this.note.left + 'px');
-//        this.area.css('top', this.note.top + 'px');
+        this.area.css('background-color', 'red');
+        this.area.css('stroke-width', '10');
+        this.area.css('stroke-color', 'black');
+
+//        
+
+
+
+        $('.image-annotate-edit-arrow-area').click(function () {
+            rotation += 5;
+            $(this).rotate(rotation);
+        });
+
 
         // Show the edition canvas and hide the view canvas
         image.canvas.children('.image-annotate-view').hide();
-        image.canvas.children('.image-annotate-edit-arrow').show();
+        image.canvas.children('.image-annotate-edit').show();
+
+        // Add the note (which we'll load with the form afterwards)
+        var form = $('<div id="image-annotate-edit-form"><form><textarea id="image-annotate-text" name="text" rows="3" cols="30">' + this.note.text + '</textarea></form></div>');
+        this.form = form;
+
+//        $('body').append(this.form);
+        this.form.css('left', this.area.offset().left + 'px');
+        this.form.css('top', (parseInt(this.area.offset().top) + parseInt(this.area.height()) + 7) + 'px');
+
+        // Set the area as a draggable/resizable element contained in the image canvas.
+        // Would be better to use the containment option for resizable but buggy
+
+        area.resizable({
+            handles: 'e',
+            stop: function (e, ui) {
+                form.css('left', area.offset().left + 'px');
+                form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px')
+
+            }
+        })
+                .draggable({
+                    containment: image.canvas,
+                    drag: function (e, ui) {
+                        console.log(area.width())
+                        form.css('left', area.offset().left + 'px');
+                        form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px');
+
+                    },
+                    stop: function (e, ui) {
+                        form.css('left', area.offset().left + 'px');
+                        form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px');
+                    }
+                });
+//        this.area.resizable('destroy');
+//        this.area.draggable('destroy');
+        return this;
+    };
+
+
+    $.fn.annotateEdit_rext.prototype.destroy = function () {
+        ///	<summary>
+        ///		Destroys an editable annotation area.
+        ///	</summary>        
+        this.image.canvas.children('.image-annotate-edit').hide();
+        this.area.resizable('destroy');
+        this.area.draggable('destroy');
+        this.area.css('height', '');
+        this.area.css('width', '');
+        this.area.css('left', '');
+        this.area.css('top', '');
+        this.form.remove();
+    }
+
+//------------------------------------------------------------//
+//--<TEXT TEXT TEXT >--//
+//for Text Functioning
+//--<TEXT TEXT TEXT >--//
+//------------------------------------------------------------//
+    $.fn.annotateEdit_text = function (image, note) {
+        ///	<summary>
+        ///		Defines an editable annotation area.
+        ///	</summary>
+        this.image = image;
+
+        if (note) {
+            this.note = note;
+        } else {
+            var newNote = new Object();
+            newNote.id = "new";
+            newNote.top = 30;
+            newNote.left = 30;
+            newNote.width = 30;
+            newNote.height = 30;
+            newNote.text = "";
+            this.note = newNote;
+        }
+        console.log(this.note)
+        // Set area
+        var area = image.canvas.children('.image-annotate-edit').children('.image-annotate-edit-area');
+        this.area = area;
+        this.area.append('<textarea></textarea>');
+        this.area.css('height', this.note.height + 'px');
+        this.area.css('width', this.note.width + 'px');
+        this.area.css('left', this.note.left + 'px');
+        this.area.css('top', this.note.top + 'px');
+
+        // Show the edition canvas and hide the view canvas
+        image.canvas.children('.image-annotate-view').hide();
+        image.canvas.children('.image-annotate-edit').show();
 
         // Add the note (which we'll load with the form afterwards)
         var form = $('<div id="image-annotate-edit-form"><form><textarea id="image-annotate-text" name="text" rows="3" cols="30">' + this.note.text + '</textarea></form></div>');
@@ -350,12 +455,6 @@
         // Would be better to use the containment option for resizable but buggy
         area.resizable({
             handles: 'all',
-            containment: image.canvas,
-            drag: function (e, ui) {
-                        form.css('left', area.offset().left + 'px');
-                form.css('width', area.offset().left + 'px');
-                        form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px');
-            },
             stop: function (e, ui) {
                 form.css('left', area.offset().left + 'px');
                 form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px');
@@ -364,23 +463,14 @@
                 .draggable({
                     containment: image.canvas,
                     drag: function (e, ui) {
-                        console.log(area.width())
                         form.css('left', area.offset().left + 'px');
                         form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px');
-                        form.css('width',area.width()+area.offset().left)
-//                        form.attr('x1', this.note.x1)
-//                        form.attr('x2', this.note.x2)
-//                        form.attr('y1', this.note.y1)
-//                        form.attr('y2', this.note.y2)
-//                        form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px');
                     },
                     stop: function (e, ui) {
                         form.css('left', area.offset().left + 'px');
                         form.css('top', (parseInt(area.offset().top) + parseInt(area.height()) + 2) + 'px');
                     }
                 });
-        this.area.resizable('destroy');
-//        this.area.draggable('destroy');
         return this;
     };
 
@@ -554,6 +644,13 @@
         this.note.text = text;
         this.note.id = editable.note.id;
         this.editable = true;
+    };
+    var rotation = 0;
+    $.fn.rotate = function (degrees) {
+        $(this).css({'-webkit-transform': 'rotate(' + degrees + 'deg)',
+            '-moz-transform': 'rotate(' + degrees + 'deg)',
+            '-ms-transform': 'rotate(' + degrees + 'deg)',
+            'transform': 'rotate(' + degrees + 'deg)'});
     };
 
 })(jQuery);
